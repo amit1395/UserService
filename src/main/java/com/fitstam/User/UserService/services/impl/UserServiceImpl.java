@@ -4,6 +4,8 @@ import com.fitstam.User.UserService.entities.Hotel;
 import com.fitstam.User.UserService.entities.Rating;
 import com.fitstam.User.UserService.entities.User;
 import com.fitstam.User.UserService.exception.ResourceNotFoundException;
+import com.fitstam.User.UserService.external.HotelService;
+import com.fitstam.User.UserService.external.RatingService;
 import com.fitstam.User.UserService.repo.UserRepo;
 import com.fitstam.User.UserService.services.UserService;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,12 @@ public class UserServiceImpl implements UserService {
     // public static  final String HOTEL_URL="http://localhost:8091/hotels/";
     public static  final String HOTEL_URL="http://HOTELSERVICE/hotels/";
 
+    @Autowired
+    public HotelService hotelService;
+
+    @Autowired
+    public RatingService ratingService;
+
     @Override
     public User saveUser(User user) {
         user.setUserId(UUID.randomUUID().toString());
@@ -55,13 +63,14 @@ public class UserServiceImpl implements UserService {
         User user = repo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User with given id not found" + userId));
         logger.info("user Object >" +user.toString());
         //create a template call here
-        Rating[] ratingsArray = restTemplate.getForObject(RATING_URL + "getRatingByUserId/" + user.getUserId(), Rating[].class);
-        logger.info("rating list "+ratingsArray.toString());
-        List<Rating> ratingsList = Arrays.stream(ratingsArray).collect(Collectors.toList());
-
+       // Rating[] ratingsArray = restTemplate.getForObject(RATING_URL + "getRatingByUserId/" + user.getUserId(), Rating[].class);
+       // logger.info("rating list "+ratingsArray.toString());
+       // List<Rating> ratingsList = Arrays.stream(ratingsArray).collect(Collectors.toList());
+        List<Rating> ratingsList=ratingService.getRatingsByUserId(user.getUserId());
         List<Rating> ratingWithHotelList = ratingsList.stream().map(rating -> {
-            ResponseEntity<Hotel> forEntity = restTemplate.getForEntity(HOTEL_URL + "getHotel/" + rating.getHotelId(), Hotel.class);
-            Hotel hotel = forEntity.getBody();
+           // ResponseEntity<Hotel> forEntity = restTemplate.getForEntity(HOTEL_URL + "getHotel/" + rating.getHotelId(), Hotel.class);
+           // Hotel hotel = forEntity.getBody();
+            Hotel hotel=hotelService.getHotel(rating.getHotelId());
             rating.setHotel(hotel);
             return rating;
         }).collect(Collectors.toList());
